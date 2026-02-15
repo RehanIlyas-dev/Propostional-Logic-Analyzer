@@ -2,25 +2,7 @@
 #include <cmath>
 #include <limits>
 #include <iomanip>
-#include <windows.h>
 using namespace std;
-
-// Function to move cursor to specific position
-void gotoxy(int x, int y)
-{
-    COORD coord;
-    coord.X = x;
-    coord.Y = y;
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
-}
-
-// Get console width for centering
-int getConsoleWidth()
-{
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-    return csbi.srWindow.Right - csbi.srWindow.Left + 1;
-}
 
 // ----------------------------
 // FUNCTION PROTOTYPES --------
@@ -47,11 +29,6 @@ void printinstructions();
 
 int main()
 {
-    // for making ascii
-    system("mode con cols=200 lines=40");
-    SetConsoleOutputCP(CP_UTF8);
-    SetConsoleCP(CP_UTF8);
-
     int option = 0;
 
     while (option != 4)
@@ -66,7 +43,7 @@ int main()
             char expr[100];
             char vars[1000];
             static int table[10000][5000];
-            cout << "\nSingle expression Selected\n " << endl;
+            cout << "\nSingle Expression Selected\n" << endl;
             inputSingleExpression(expr);
 
             if (!isValidExpression(expr))
@@ -91,7 +68,7 @@ int main()
             char expr1[100], expr2[100], vars[1000];
             static int table[10000][5000];
 
-            cout << "\nTwo expressions Selected\n " << endl;
+            cout << "\nTwo Expressions Selected\n" << endl;
             inputTwoExpressions(expr1, expr2);
 
             if (!isValidExpression(expr1) || !isValidExpression(expr2))
@@ -106,12 +83,12 @@ int main()
             generateTruthTable(varCount, table);
             printTruthTableDouble(varCount, vars, expr1, expr2, table);
 
-            cout << "\nProcess Complete. \nPress any key to return back to Menu...";
+            cout << "\nProcess Complete.\nPress any key to return back to Menu...";
             cin.get();
         }
         else if (option == 3)
         {
-            system("cls");
+            system("clear");
             printinstructions();
             printInstructionsmenu();
             cout << "\nPress any key to return back to Menu...";
@@ -120,7 +97,7 @@ int main()
         else if (option == 4)
         {
             cout << "Exiting Program...\n\n";
-            cout << "Thanks For Using Our Program !!!";
+            cout << "Thanks For Using Our Program!\n";
             return 0;
         }
     }
@@ -139,134 +116,51 @@ void clearBuffer()
 
 void printHeader()
 {
-    system("cls");
-
-    int startX = 35; // horizontal center
-    int startY = 2;  // vertical position
-
-    gotoxy(startX, startY);
-    cout << R"(██╗      ██████╗  ██████╗ ██╗ ██████╗ █████╗ ██╗          █████╗ ███╗   ██╗ █████╗ ██╗     ██╗   ██╗███████╗███████╗██████╗ )";
-
-    gotoxy(startX, startY + 1);
-    cout << R"(██║     ██╔═══██╗██╔════╝ ██║██╔════╝██╔══██╗██║         ██╔══██╗████╗  ██║██╔══██╗██║     ╚██╗ ██╔╝╚══███╔╝██╔════╝██╔══██╗)";
-
-    gotoxy(startX, startY + 2);
-    cout << R"(██║     ██║   ██║██║  ███╗██║██║     ███████║██║         ███████║██╔██╗ ██║███████║██║      ╚████╔╝   ███╔╝ █████╗  ██████╔╝)";
-
-    gotoxy(startX, startY + 3);
-    cout << R"(██║     ██║   ██║██║   ██║██║██║     ██╔══██║██║         ██╔══██║██║╚██╗██║██╔══██║██║       ╚██╔╝   ███╔╝  ██╔══╝  ██╔══██╗)";
-
-    gotoxy(startX, startY + 4);
-    cout << R"(███████╗╚██████╔╝╚██████╔╝██║╚██████╗██║  ██║███████╗    ██║  ██║██║ ╚████║██║  ██║███████╗   ██║   ███████╗███████╗██║  ██║)";
-
-    gotoxy(startX, startY + 5);
-    cout << R"(╚══════╝ ╚═════╝  ╚═════╝ ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝    ╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝   ╚═╝   ╚══════╝╚══════╝╚═╝  ╚═╝)";
-
-    cout << endl
-         << endl;
+    system("clear");
+    cout << "=====================================================\n";
+    cout << "       LOGICAL ANALYZER - TRUTH TABLE GENERATOR     \n";
+    cout << "=====================================================\n\n";
 }
 
 void printsingleexp()
 {
-    system("cls");
-
-    int startX = 35; // center horizontally
-    int startY = 2;  // top spacing
-
-    gotoxy(startX, startY);
-    cout << R"(███████╗██╗███╗   ██╗ ██████╗ ██╗     ███████╗    ███████╗██╗  ██╗██████╗ ██████╗ ███████╗███████╗███████╗██╗ ██████╗ ███╗   ██╗)";
-
-    gotoxy(startX, startY + 1);
-    cout << R"(██╔════╝██║████╗  ██║██╔════╝ ██║     ██╔════╝    ██╔════╝╚██╗██╔╝██╔══██╗██╔══██╗██╔════╝██╔════╝██╔════╝██║██╔═══██╗████╗  ██║)";
-
-    gotoxy(startX, startY + 2);
-    cout << R"(███████╗██║██╔██╗ ██║██║  ███╗██║     █████╗      █████╗   ╚███╔╝ ██████╔╝██████╔╝█████╗  ███████╗███████╗██║██║   ██║██╔██╗ ██║)";
-
-    gotoxy(startX, startY + 3);
-    cout << R"(╚════██║██║██║╚██╗██║██║   ██║██║     ██╔══╝      ██╔══╝   ██╔██╗ ██╔═══╝ ██╔══██╗██╔══╝  ╚════██║╚════██║██║██║   ██║██║╚██╗██║)";
-
-    gotoxy(startX, startY + 4);
-    cout << R"(███████║██║██║ ╚████║╚██████╔╝███████╗███████╗    ███████╗██╔╝ ██╗██║     ██║  ██║███████╗███████║███████║██║╚██████╔╝██║ ╚████║)";
-
-    gotoxy(startX, startY + 5);
-    cout << R"(╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚══════╝╚══════╝    ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝)";
-
-    cout << endl
-         << endl;
+    system("clear");
+    cout << "=====================================================\n";
+    cout << "               SINGLE EXPRESSION MODE               \n";
+    cout << "=====================================================\n\n";
 }
 
 void printdoubleexp()
 {
-    system("cls");
-
-    int startX = 35; // center horizontally
-    int startY = 2;  // top spacing
-
-    gotoxy(startX, startY);
-    cout << R"(██████╗  ██████╗ ██╗   ██╗██████╗ ██╗     ███████╗    ███████╗██╗  ██╗██████╗ ██████╗ ███████╗███████╗███████╗██╗ ██████╗ ███╗   ██╗)";
-
-    gotoxy(startX, startY + 1);
-    cout << R"(██╔══██╗██╔═══██╗██║   ██║██╔══██╗██║     ██╔════╝    ██╔════╝╚██╗██╔╝██╔══██╗██╔══██╗██╔════╝██╔════╝██╔════╝██║██╔═══██╗████╗  ██║)";
-
-    gotoxy(startX, startY + 2);
-    cout << R"(██║  ██║██║   ██║██║   ██║██████╔╝██║     █████╗      █████╗   ╚███╔╝ ██████╔╝██████╔╝█████╗  ███████╗███████╗██║██║   ██║██╔██╗ ██║)";
-
-    gotoxy(startX, startY + 3);
-    cout << R"(██║  ██║██║   ██║██║   ██║██╔══██╗██║     ██╔══╝      ██╔══╝   ██╔██╗ ██╔═══╝ ██╔══██╗██╔══╝  ╚════██║╚════██║██║██║   ██║██║╚██╗██║)";
-
-    gotoxy(startX, startY + 4);
-    cout << R"(██████╔╝╚██████╔╝╚██████╔╝██████╔╝███████╗███████╗    ███████╗██╔╝ ██╗██║     ██║  ██║███████╗███████║███████║██║╚██████╔╝██║ ╚████║)";
-
-    gotoxy(startX, startY + 5);
-    cout << R"(╚═════╝  ╚═════╝  ╚═════╝ ╚═════╝ ╚══════╝╚══════╝    ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝)";
-
-    cout << endl
-         << endl;
+    system("clear");
+    cout << "=====================================================\n";
+    cout << "               DOUBLE EXPRESSION MODE               \n";
+    cout << "=====================================================\n\n";
 }
 
 void printinstructions()
 {
-    int startX = 45; // horizontal centering
-    int startY = 2;  // vertical spacing
-
-    gotoxy(startX, startY);
-    cout << R"(██╗███╗   ██╗███████╗████████╗██████╗ ██╗   ██╗ ██████╗████████╗██╗ ██████╗ ███╗   ██╗███████╗)";
-
-    gotoxy(startX, startY + 1);
-    cout << R"(██║████╗  ██║██╔════╝╚══██╔══╝██╔══██╗██║   ██║██╔════╝╚══██╔══╝██║██╔═══██╗████╗  ██║██╔════╝)";
-
-    gotoxy(startX, startY + 2);
-    cout << R"(██║██╔██╗ ██║███████╗   ██║   ██████╔╝██║   ██║██║        ██║   ██║██║   ██║██╔██╗ ██║███████╗)";
-
-    gotoxy(startX, startY + 3);
-    cout << R"(██║██║╚██╗██║╚════██║   ██║   ██╔══██╗██║   ██║██║        ██║   ██║██║   ██║██║╚██╗██║╚════██║)";
-
-    gotoxy(startX, startY + 4);
-    cout << R"(██║██║ ╚████║███████║   ██║   ██║  ██║╚██████╔╝╚██████╗   ██║   ██║╚██████╔╝██║ ╚████║███████║)";
-
-    gotoxy(startX, startY + 5);
-    cout << R"(╚═╝╚═╝  ╚═══╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝  ╚═════╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝)";
-
-    cout << endl
-         << endl;
+    cout << "=====================================================\n";
+    cout << "                    INSTRUCTIONS                     \n";
+    cout << "=====================================================\n\n";
 }
 
 void printMenu()
 {
-    cout << "\n1. Press 1 to give Single Expression " << endl;
-    cout << "2. Press 2 to give Two Expressions " << endl;
-    cout << "3. Press 3 to See User's Manual " << endl;
-    cout << "4. Press 4 to Exit the Program " << endl;
+    cout << "  1. Single Expression\n";
+    cout << "  2. Two Expressions\n";
+    cout << "  3. User's Manual\n";
+    cout << "  4. Exit\n";
 }
 
 int getUserChoice()
 {
     int choice;
-    cout << "\nEnter your Choice: ";
+    cout << "\nEnter your choice: ";
 
     while (!(cin >> choice))
     {
-        cout << "ERROR!! Please enter a Correct Choice (1, 2, or 3): ";
+        cout << "Invalid input. Please enter 1, 2, 3, or 4: ";
         clearBuffer();
     }
     clearBuffer();
@@ -276,15 +170,15 @@ int getUserChoice()
 
 void inputSingleExpression(char expr[])
 {
-    cout << "Enter the logical expression : ";
+    cout << "Enter the logical expression: ";
     cin.getline(expr, 100);
 }
 
 void inputTwoExpressions(char expr1[], char expr2[])
 {
-    cout << "Enter first Expression : ";
+    cout << "Enter first expression:  ";
     cin.getline(expr1, 100);
-    cout << "\nEnter second Expression : ";
+    cout << "Enter second expression: ";
     cin.getline(expr2, 100);
 }
 
@@ -294,9 +188,7 @@ int detectvariables(char expr[], char vars[])
     for (int i = 0; expr[i] != '\0'; i++)
     {
         if (expr[i] >= 'a' && expr[i] <= 'z')
-        {
             expr[i] = expr[i] - 32;
-        }
 
         if (expr[i] >= 'A' && expr[i] <= 'Z')
         {
@@ -321,12 +213,10 @@ int detectvariables(char expr[], char vars[])
 
 void printVariables(int varCount, char vars[])
 {
-    cout << "\nVariables Detected are : ";
+    cout << "\nVariables detected: ";
     for (int i = 0; i < varCount; i++)
-    {
         cout << vars[i] << " ";
-    }
-    cout << endl;
+    cout << "\n";
 }
 
 void generateTruthTable(int varCount, int table[][5000])
@@ -383,50 +273,27 @@ int getVariableValue(char var, char vars[], int tableRow[], int varCount)
     for (int i = 0; i < varCount; i++)
     {
         if (vars[i] == var)
-        {
             return tableRow[i];
-        }
     }
     return 0;
 }
 
-// Get precedence of operators
 int getPrecedence(char op)
 {
-    if (op == '!' || op == '~')
-    {
-        return 5;
-    }
-    if (op == '&')
-    {
-        return 4;
-    }
-    if (op == '|')
-    {
-        return 3;
-    }
-    if (op == '^')
-    {
-        return 2;
-    }
-    if (op == '>')
-    {
-        return 1;
-    }
-    if (op == '=')
-    {
-        return 0;
-    }
+    if (op == '!' || op == '~') return 5;
+    if (op == '&') return 4;
+    if (op == '|') return 3;
+    if (op == '^') return 2;
+    if (op == '>') return 1;
+    if (op == '=') return 0;
     return -1;
 }
 
-// Check if character is an operator
 bool isOperator(char c)
 {
     return (c == '!' || c == '~' || c == '&' || c == '|' || c == '^' || c == '>' || c == '=');
 }
 
-// Convert infix expression to postfix using Shunting Yard Algorithm
 void infixToPostfix(char infix[], char postfix[])
 {
     char stack[100];
@@ -437,23 +304,19 @@ void infixToPostfix(char infix[], char postfix[])
     {
         char c = infix[i];
 
-        // Skip spaces
         if (c == ' ')
             continue;
 
-        // If operand (variable or constant), add to output
         if ((c >= 'A' && c <= 'Z') || c == '0' || c == '1')
         {
             postfix[j] = c;
             j++;
         }
-        // If opening parenthesis, push to stack
         else if (c == '(')
         {
             stack[top] = c;
             top++;
         }
-        // If closing parenthesis, pop until opening parenthesis
         else if (c == ')')
         {
             while (top >= 0 && stack[top] != '(')
@@ -465,18 +328,15 @@ void infixToPostfix(char infix[], char postfix[])
             if (top >= 0)
                 top--;
         }
-        // If operator
         else if (isOperator(c))
         {
             if (c == '!' || c == '~')
             {
-                // Push NOT directly (right associative)
                 stack[top] = c;
                 top++;
             }
             else
             {
-                // Pop operators with higher or equal precedence
                 while (top >= 0 && stack[top] != '(' &&
                        getPrecedence(stack[top]) >= getPrecedence(c))
                 {
@@ -490,7 +350,6 @@ void infixToPostfix(char infix[], char postfix[])
         }
     }
 
-    // Pop remaining operators from stack
     while (top >= 0)
     {
         postfix[j] = stack[top];
@@ -498,10 +357,9 @@ void infixToPostfix(char infix[], char postfix[])
         top--;
     }
 
-    postfix[j] = '\0'; // Null terminate
+    postfix[j] = '\0';
 }
 
-// Evaluate postfix expression
 int evaluatePostfix(char postfix[], char vars[], int varCount, int tableRow[])
 {
     int stack[100];
@@ -511,7 +369,6 @@ int evaluatePostfix(char postfix[], char vars[], int varCount, int tableRow[])
     {
         char c = postfix[i];
 
-        // If operand, push to stack
         if (c >= 'A' && c <= 'Z')
         {
             int value = getVariableValue(c, vars, tableRow, varCount);
@@ -521,12 +378,10 @@ int evaluatePostfix(char postfix[], char vars[], int varCount, int tableRow[])
         {
             stack[++top] = c - '0';
         }
-        // If operator, pop operands and apply operation
         else if (isOperator(c))
         {
             if (c == '!' || c == '~')
             {
-                // Unary operator - pop one operand
                 if (top >= 0)
                 {
                     int operand = stack[top--];
@@ -535,33 +390,18 @@ int evaluatePostfix(char postfix[], char vars[], int varCount, int tableRow[])
             }
             else
             {
-                // Binary operator - pop two operands
                 if (top >= 1)
                 {
                     int operand2 = stack[top--];
                     int operand1 = stack[top--];
                     int result = 0;
 
-                    if (c == '&')
-                    {
-                        result = operand1 & operand2;
-                    }
-                    else if (c == '|')
-                    {
-                        result = operand1 | operand2;
-                    }
-                    else if (c == '^')
-                    {
-                        result = operand1 ^ operand2;
-                    }
-                    else if (c == '>')
-                    {
-                        result = (!operand1) | operand2; // P -> Q = ~P | Q
-                    }
-                    else if (c == '=')
-                    {
-                        result = (operand1 == operand2); // P <-> Q
-                    }
+                    if (c == '&')      result = operand1 & operand2;
+                    else if (c == '|') result = operand1 | operand2;
+                    else if (c == '^') result = operand1 ^ operand2;
+                    else if (c == '>') result = (!operand1) | operand2;
+                    else if (c == '=') result = (operand1 == operand2);
+
                     stack[top] = result;
                     top++;
                 }
@@ -569,19 +409,13 @@ int evaluatePostfix(char postfix[], char vars[], int varCount, int tableRow[])
         }
     }
 
-    // Final result is on top of stack
     return (top >= 0) ? stack[top] : 0;
 }
 
-// Main evaluation function that uses Shunting Yard Algorithm
 int evaluateExpression(char expr[], char vars[], int varCount, int tableRow[])
 {
     char postfix[200];
-
-    // Step 1: Convert infix to postfix
     infixToPostfix(expr, postfix);
-
-    // Step 2: Evaluate postfix expression
     return evaluatePostfix(postfix, vars, varCount, tableRow);
 }
 
@@ -590,84 +424,59 @@ void printTruthTableSingle(int varCount, char vars[], char expr[], int table[][5
     bool allTrue = true;
     bool allFalse = true;
 
-    cout << "\n\nTRUTH TABLE:\n\n";
+    cout << "\nTRUTH TABLE:\n\n";
 
     int rows = pow(2, varCount);
     int colWidth = 6;
     int totalCols = varCount + 1;
-    int totalWidth = 1 + totalCols * (colWidth + 1);
-    int consoleWidth = getConsoleWidth();
-    int startX = (consoleWidth - totalWidth) / 2;
-    if (startX < 0)
-        startX = 0;
-
-    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(hConsole, &csbi);
-    int currentY = csbi.dwCursorPosition.Y;
 
     // Top border
-    gotoxy(startX, currentY++);
     cout << "+";
     for (int i = 0; i < totalCols; i++)
         cout << string(colWidth, '-') << "+";
+    cout << "\n";
 
     // Header row
-    gotoxy(startX, currentY++);
     cout << "|";
     for (int i = 0; i < varCount; i++)
-    {
         cout << setw(colWidth / 2 + 1) << vars[i] << setw(colWidth / 2) << "|";
-    }
     cout << setw(colWidth / 2 + 1) << "R" << setw(colWidth / 2) << "|";
+    cout << "\n";
 
     // Header separator
-    gotoxy(startX, currentY++);
     cout << "+";
     for (int i = 0; i < totalCols; i++)
         cout << string(colWidth, '=') << "+";
+    cout << "\n";
 
     // Data rows
     for (int i = 0; i < rows; i++)
     {
-        gotoxy(startX, currentY++);
         cout << "|";
-
         for (int j = 0; j < varCount; j++)
-        {
             cout << setw(colWidth / 2 + 1) << table[i][j] << setw(colWidth / 2) << "|";
-        }
 
         int result = evaluateExpression(expr, vars, varCount, table[i]);
         cout << setw(colWidth / 2 + 1) << result << setw(colWidth / 2) << "|";
+        cout << "\n";
 
-        if (result == 0)
-            allTrue = false;
-        if (result == 1)
-            allFalse = false;
+        if (result == 0) allTrue = false;
+        if (result == 1) allFalse = false;
     }
 
     // Bottom border
-    gotoxy(startX, currentY++);
     cout << "+";
     for (int i = 0; i < totalCols; i++)
         cout << string(colWidth, '-') << "+";
+    cout << "\n";
 
-    // Move cursor below table for status messages
-    gotoxy(0, currentY + 1);
-    cout << "\nLOGICAL STATUS: \n";
+    cout << "\nLOGICAL STATUS:\n";
     if (allTrue)
-    {
-        cout << "\nThis Expression is Tautology.\n";
-    }
+        cout << "  This expression is a Tautology.\n";
     else if (allFalse)
-    {
-        cout << "\nThis Expression is Contradiction/Absurdity.\n";
-    }
+        cout << "  This expression is a Contradiction / Absurdity.\n";
     else
-    {
-        cout << "\nThis Expression is Contigency.\n";
-    }
+        cout << "  This expression is a Contingency.\n";
 }
 
 void printTruthTableDouble(int varCount, char vars[], char expr1[], char expr2[], int table[][5000])
@@ -677,119 +486,74 @@ void printTruthTableDouble(int varCount, char vars[], char expr1[], char expr2[]
     bool allTrue1 = true, allFalse1 = true;
     bool allTrue2 = true, allFalse2 = true;
 
-    cout << "\n\nTRUTH TABLE:\n\n";
+    cout << "\nTRUTH TABLE:\n\n";
 
     int colWidth = 6;
     int totalCols = varCount + 2;
-    int totalWidth = 1 + totalCols * (colWidth + 1);
-    int consoleWidth = getConsoleWidth();
-    int startX = (consoleWidth - totalWidth) / 2;
-    if (startX < 0)
-        startX = 0;
-
-    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(hConsole, &csbi);
-    int currentY = csbi.dwCursorPosition.Y;
 
     // Top border
-    gotoxy(startX, currentY++);
     cout << "+";
     for (int i = 0; i < totalCols; i++)
         cout << string(colWidth, '-') << "+";
+    cout << "\n";
 
     // Header row
-    gotoxy(startX, currentY++);
     cout << "|";
     for (int i = 0; i < varCount; i++)
-    {
         cout << setw(colWidth / 2 + 1) << vars[i] << setw(colWidth / 2) << "|";
-    }
     cout << setw(colWidth / 2) << "R1" << setw(colWidth / 2 + 1) << "|";
     cout << setw(colWidth / 2) << "R2" << setw(colWidth / 2 + 1) << "|";
+    cout << "\n";
 
     // Header separator
-    gotoxy(startX, currentY++);
     cout << "+";
     for (int i = 0; i < totalCols; i++)
         cout << string(colWidth, '=') << "+";
+    cout << "\n";
 
     // Data rows
     for (int i = 0; i < rows; i++)
     {
-        gotoxy(startX, currentY++);
         cout << "|";
-
         for (int j = 0; j < varCount; j++)
-        {
             cout << setw(colWidth / 2 + 1) << table[i][j] << setw(colWidth / 2) << "|";
-        }
 
         int result1 = evaluateExpression(expr1, vars, varCount, table[i]);
         int result2 = evaluateExpression(expr2, vars, varCount, table[i]);
 
         cout << setw(colWidth / 2 + 1) << result1 << setw(colWidth / 2) << "|";
         cout << setw(colWidth / 2 + 1) << result2 << setw(colWidth / 2) << "|";
+        cout << "\n";
 
-        if (result1 != result2)
-            equivalent = false;
-        if (result1 == 0)
-            allTrue1 = false;
-        if (result1 == 1)
-            allFalse1 = false;
-        if (result2 == 0)
-            allTrue2 = false;
-        if (result2 == 1)
-            allFalse2 = false;
+        if (result1 != result2) equivalent = false;
+        if (result1 == 0) allTrue1 = false;
+        if (result1 == 1) allFalse1 = false;
+        if (result2 == 0) allTrue2 = false;
+        if (result2 == 1) allFalse2 = false;
     }
 
     // Bottom border
-    gotoxy(startX, currentY++);
     cout << "+";
     for (int i = 0; i < totalCols; i++)
         cout << string(colWidth, '-') << "+";
+    cout << "\n";
 
-    // Move cursor below table for status messages
-    gotoxy(0, currentY + 1);
-    cout << "\nEQUIVALENCE CHECK: \n";
-
+    cout << "\nEQUIVALENCE CHECK:\n";
     if (equivalent)
-    {
-        cout << "\nThe two Statements are Equivalent.\n";
-    }
+        cout << "  The two statements are Equivalent.\n";
     else
-    {
-        cout << "\nThe two Statements are NOT Equivalent.\n";
-    }
+        cout << "  The two statements are NOT Equivalent.\n";
 
-    cout << "\nLOGICAL STATUS: \n";
-    cout << "\nExpression 1 is : ";
-    if (allTrue1)
-    {
-        cout << "Tautology\n";
-    }
-    else if (allFalse1)
-    {
-        cout << "Contradiction / Absurdity\n";
-    }
-    else
-    {
-        cout << "Contigency\n";
-    }
+    cout << "\nLOGICAL STATUS:\n";
+    cout << "  Expression 1: ";
+    if (allTrue1)       cout << "Tautology\n";
+    else if (allFalse1) cout << "Contradiction / Absurdity\n";
+    else                cout << "Contingency\n";
 
-    cout << "\nExpression 2 is : ";
-    if (allTrue2)
-    {
-        cout << "Tautology\n";
-    }
-    else if (allFalse2)
-    {
-        cout << " Contradiction / Absurdity\n";
-    }
-    else
-    {
-        cout << "Contigency\n";
-    }
+    cout << "  Expression 2: ";
+    if (allTrue2)       cout << "Tautology\n";
+    else if (allFalse2) cout << "Contradiction / Absurdity\n";
+    else                cout << "Contingency\n";
 }
 
 bool isValidExpression(char expr[])
@@ -804,30 +568,27 @@ bool isValidExpression(char expr[])
         if (c == ' ')
             continue;
 
-        if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '!' || c == '~' || c == '&' || c == '|' || c == '^' || c == '>' || c == '=' || c == '(' || c == ')'))
+        if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+              c == '!' || c == '~' || c == '&' || c == '|' ||
+              c == '^' || c == '>' || c == '=' || c == '(' || c == ')'))
         {
-            cout << " \nError: Invalid character " << c << "\n";
+            cout << "\nError: Invalid character '" << c << "'\n";
             return false;
         }
 
-        if (c == '(')
-        {
-            brackets++;
-        }
-        if (c == ')')
-        {
-            brackets--;
-        }
+        if (c == '(') brackets++;
+        if (c == ')') brackets--;
+
         if (brackets < 0)
         {
-            cout << " \nError: Extra closing bracket ')'\n";
+            cout << "\nError: Extra closing bracket ')'\n";
             return false;
         }
 
         if ((c == '&' || c == '|' || c == '^' || c == '>' || c == '=') &&
             (prev == '&' || prev == '|' || prev == '^' || prev == '>' || prev == '='))
         {
-            cout << " \nError: Two operators together\n";
+            cout << "\nError: Two operators in a row\n";
             return false;
         }
 
@@ -836,13 +597,13 @@ bool isValidExpression(char expr[])
 
     if (brackets != 0)
     {
-        cout << " \nError: Brackets are not balanced\n";
+        cout << "\nError: Brackets are not balanced\n";
         return false;
     }
 
     if (prev == '&' || prev == '|' || prev == '^' || prev == '>' || prev == '=')
     {
-        cout << " \nError: Expression ends with operator\n";
+        cout << "\nError: Expression ends with an operator\n";
         return false;
     }
 
@@ -851,29 +612,26 @@ bool isValidExpression(char expr[])
 
 void printInstructionsmenu()
 {
-    cout << endl
-         << endl;
-    cout << "=================== USER'S MANUAL ===================\n";
+    cout << "=================== USER'S MANUAL ===================\n\n";
     cout << "1. This program generates Truth Tables for Logical Expressions.\n";
-    cout << "2. You can input either a Single Expression or Two Expressions.\n";
+    cout << "2. You can input either a Single Expression or Two Expressions.\n\n";
     cout << "3. Supported Logical Operators:\n";
-    cout << "   - ! or ~ : NOT\n";
-    cout << "   - &      : AND\n";
-    cout << "   - |      : OR\n";
-    cout << "   - ^      : XOR\n";
-    cout << "   - >      : IMPLICATION (P -> Q)\n";
-    cout << "   - =      : BICONDITIONAL / EQUIVALENCE (P <-> Q)\n";
+    cout << "   ! or ~  :  NOT\n";
+    cout << "   &       :  AND\n";
+    cout << "   |       :  OR\n";
+    cout << "   ^       :  XOR\n";
+    cout << "   >       :  IMPLICATION  (P -> Q)\n";
+    cout << "   =       :  BICONDITIONAL / EQUIVALENCE  (P <-> Q)\n\n";
     cout << "4. Variables should be single letters (A-Z or a-z).\n";
-    cout << "5. Expressions can include parentheses '()' for grouping.\n";
+    cout << "5. Expressions can include parentheses '()' for grouping.\n\n";
     cout << "6. After entering expressions, the program:\n";
     cout << "   - Detects all unique variables.\n";
     cout << "   - Generates a Truth Table for all possible combinations.\n";
-    cout << "   - Evaluates the expression(s) and shows results.\n";
-    cout << "7. For two expressions, it also checks whether the two are Equivalent.\n";
+    cout << "   - Evaluates the expression(s) and shows results.\n\n";
+    cout << "7. For two expressions, it also checks whether they are Equivalent.\n\n";
     cout << "8. Expression Results:\n";
-    cout << "   - Tautology: True for all combinations\n";
-    cout << "   - Contradiction / Absurdity: False for all combinations\n";
-    cout << "   - Contingency: True for some and False for some combinations\n";
+    cout << "   Tautology      : True for all combinations\n";
+    cout << "   Contradiction  : False for all combinations\n";
+    cout << "   Contingency    : True for some, False for others\n\n";
     cout << "=====================================================\n";
-    cout << endl;
 }
