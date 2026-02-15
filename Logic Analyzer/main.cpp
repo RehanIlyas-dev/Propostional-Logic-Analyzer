@@ -16,9 +16,9 @@ void inputTwoExpressions(char expr1[], char expr2[]);
 int detectvariables(char expr[], char vars[]);
 void printVariables(int varCount, char vars[]);
 int combineVariables(char expr1[], char expr2[], char vars[]);
-void generateTruthTable(int varCount, int table[][5000]);
-void printTruthTableSingle(int varCount, char vars[], char expr[], int table[][5000]);
-void printTruthTableDouble(int varCount, char vars[], char expr1[], char expr2[], int table[][5000]);
+void generateTruthTable(int varCount, int table[][500]);
+void printTruthTableSingle(int varCount, char vars[], char expr[], int table[][500]);
+void printTruthTableDouble(int varCount, char vars[], char expr1[], char expr2[], int table[][500]);
 int evaluateExpression(char expr[], char vars[], int varCount, int tablerow[]);
 bool isValidExpression(char expr[]);
 void printInstructionsmenu();
@@ -42,7 +42,7 @@ int main()
             printsingleexp();
             char expr[100];
             char vars[1000];
-            static int table[10000][5000];
+            static int table[1000][500];
             cout << "\nSingle Expression Selected\n" << endl;
             inputSingleExpression(expr);
 
@@ -66,7 +66,7 @@ int main()
         {
             printdoubleexp();
             char expr1[100], expr2[100], vars[1000];
-            static int table[10000][5000];
+            static int table[1000][500];
 
             cout << "\nTwo Expressions Selected\n" << endl;
             inputTwoExpressions(expr1, expr2);
@@ -219,7 +219,7 @@ void printVariables(int varCount, char vars[])
     cout << "\n";
 }
 
-void generateTruthTable(int varCount, int table[][5000])
+void generateTruthTable(int varCount, int table[][500])
 {
     int rows = pow(2, varCount);
 
@@ -419,7 +419,7 @@ int evaluateExpression(char expr[], char vars[], int varCount, int tableRow[])
     return evaluatePostfix(postfix, vars, varCount, tableRow);
 }
 
-void printTruthTableSingle(int varCount, char vars[], char expr[], int table[][5000])
+void printTruthTableSingle(int varCount, char vars[], char expr[], int table[][500])
 {
     bool allTrue = true;
     bool allFalse = true;
@@ -479,7 +479,7 @@ void printTruthTableSingle(int varCount, char vars[], char expr[], int table[][5
         cout << "  This expression is a Contingency.\n";
 }
 
-void printTruthTableDouble(int varCount, char vars[], char expr1[], char expr2[], int table[][5000])
+void printTruthTableDouble(int varCount, char vars[], char expr1[], char expr2[], int table[][500])
 {
     int rows = pow(2, varCount);
     bool equivalent = true;
