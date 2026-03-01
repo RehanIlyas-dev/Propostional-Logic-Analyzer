@@ -289,8 +289,7 @@ void infixToPostfix(char infix[], char postfix[]) {
       postfix[j] = c;
       j++;
     } else if (c == '(') {
-      stack[top] = c;
-      top++;
+      stack[++top] = c;
     } else if (c == ')') {
       while (top >= 0 && stack[top] != '(') {
         postfix[j] = stack[top];
@@ -301,8 +300,7 @@ void infixToPostfix(char infix[], char postfix[]) {
         top--;
     } else if (isOperator(c)) {
       if (c == '!' || c == '~') {
-        stack[top] = c;
-        top++;
+        stack[++top] = c;
       } else {
         while (top >= 0 && stack[top] != '(' &&
                getPrecedence(stack[top]) >= getPrecedence(c)) {
@@ -310,8 +308,7 @@ void infixToPostfix(char infix[], char postfix[]) {
           j++;
           top--;
         }
-        stack[top] = c;
-        top++;
+        stack[++top] = c;
       }
     }
   }
@@ -360,8 +357,7 @@ int evaluatePostfix(char postfix[], char vars[], int varCount, int tableRow[]) {
           else if (c == '=')
             result = (operand1 == operand2);
 
-          stack[top] = result;
-          top++;
+          stack[++top] = result;
         }
       }
     }
@@ -649,7 +645,7 @@ int detectVariablesMultiple(char exprs[][100], int exprCount, char vars[]) {
 
 bool checkEntailment(char premises[][100], int premiseCount, char conclusion[],
                      char vars[], int varCount, bool &vacuous) {
-  int table[1000][500];
+  static int table[1000][500];
   generateTruthTable(varCount, table);
   int rows = pow(2, varCount);
   vacuous = true;
