@@ -2,6 +2,8 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <cstring>
+#include <string>
 using namespace std;
 
 // ----------------------------
@@ -28,6 +30,13 @@ void clearBuffer();
 void printsingleexp();
 void printdoubleexp();
 void printinstructions();
+void printStatementMode();
+void statementEvaluationMode();
+void normalizeExpression(const char src[], char dst[]);
+int detectVariablesMultiple(char exprs[][100], int exprCount, char vars[]);
+bool checkEntailment(char premises[][100], int premiseCount, char conclusion[],
+                     char vars[], int varCount, bool &vacuous);
+bool detectSimpleLaw(char premises[][100], int premiseCount, char conclusion[]);
 
 int main() {
   int option = 0;
@@ -80,6 +89,9 @@ int main() {
 
       cout << "\nProcess Complete.\nPress any key to return back to Menu...";
       cin.get();
+    } else if (option == 5) {
+      printStatementMode();
+      statementEvaluationMode();
     } else if (option == 3) {
       system("clear");
       printinstructions();
@@ -130,11 +142,11 @@ void printinstructions() {
   cout << "                    INSTRUCTIONS                     \n";
   cout << "=====================================================\n\n";
 }
-
 void printMenu() {
   cout << "  1. Single Expression\n";
   cout << "  2. Two Expressions\n";
   cout << "  3. User's Manual\n";
+  cout << "  5. Statement Evaluation\n";
   cout << "  4. Exit\n";
 }
 
@@ -143,7 +155,7 @@ int getUserChoice() {
   cout << "\nEnter your choice: ";
 
   while (!(cin >> choice)) {
-    cout << "Invalid input. Please enter 1, 2, 3, or 4: ";
+    cout << "Invalid input. Please enter 1, 2, 3, 4, or 5: ";
     clearBuffer();
   }
   clearBuffer();
@@ -588,4 +600,244 @@ void printInstructionsmenu() {
   cout << "   Contradiction  : False for all combinations\n";
   cout << "   Contingency    : True for some, False for others\n\n";
   cout << "=====================================================\n";
+}
+
+void printStatementMode() {
+  system("clear");
+  cout << "=====================================================" << endl;
+  cout << "               STATEMENT EVALUATION MODE             " << endl;
+  cout << "=====================================================" << endl
+       << endl;
+}
+
+void normalizeExpression(const char src[], char dst[]) {
+  int j = 0;
+  for (int i = 0; src[i] != '\0'; i++) {
+    char c = src[i];
+    if (c == ' ')
+      continue;
+    if (c >= 'a' && c <= 'z')
+      c = c - 32;
+    dst[j++] = c;
+  }
+  dst[j] = '\0';
+}
+
+int detectVariablesMultiple(char exprs[][100], int exprCount, char vars[]) {
+  int count = 0;
+  for (int k = 0; k < exprCount; k++) {
+    for (int i = 0; exprs[k][i] != '\0'; i++) {
+      char c = exprs[k][i];
+      if (c >= 'a' && c <= 'z')
+        c = c - 32;
+      if (c >= 'A' && c <= 'Z') {
+        bool found = false;
+        for (int j = 0; j < count; j++) {
+          if (vars[j] == c) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          vars[count++] = c;
+        }
+      }
+    }
+  }
+  return count;
+}
+
+bool checkEntailment(char premises[][100], int premiseCount, char conclusion[],
+                     char vars[], int varCount, bool &vacuous) {
+  int table[1000][500];
+  generateTruthTable(varCount, table);
+  int rows = pow(2, varCount);
+  vacuous = true;
+
+  for (int i = 0; i < rows; i++) {
+    bool allPremisesTrue = true;
+    for (int p = 0; p < premiseCount; p++) {
+      int r = evaluateExpression(premises[p], vars, varCount, table[i]);
+      if (r == 0) {
+        allPremisesTrue = false;
+        break;
+      }
+    }
+    if (allPremisesTrue) {
+      vacuous = false;
+      int conclVal = evaluateExpression(conclusion, vars, varCount, table[i]);
+      if (conclVal == 0)
+        return false; // counterexample found
+    }
+  }
+
+  return true; // holds (possibly vacuously)
+}
+
+bool detectSimpleLaw(char premises[][100], int premiseCount, char conclusion[]) {
+  char nprem[10][120];
+  char ncon[120];
+  for (int i = 0; i < premiseCount; i++)
+    normalizeExpression(premises[i], nprem[i]);
+  normalizeExpression(conclusion, ncon);
+
+  string con(ncon);
+  // strip outer parentheses if present
+  auto strip = [](const string &s) {
+    if (s.size() >= 2 && s.front() == '(' && s.back() == ')')
+      return s.substr(1, s.size() - 2);
+    return s;
+  };
+
+  // Conjunction Introduction: premises contain P and Q, conclusion is P&Q
+  if (premiseCount >= 2) {
+    for (int i = 0; i < premiseCount; i++) {
+      for (int j = i + 1; j < premiseCount; j++) {
+        string a = strip(string(nprem[i]));
+        string b = strip(string(nprem[j]));
+        string comb = a + "&" + b;
+        string comb2 = b + "&" + a;
+        if (strip(con) == comb || strip(con) == comb2) {
+          return true;
+        }
+      }
+    }
+  }
+
+  // Conjunction Elimination: premise is P&Q and conclusion is P or Q
+  if (premiseCount == 1) {
+    string p0 = strip(string(nprem[0]));
+    size_t pos = p0.find('&');
+    if (pos != string::npos) {
+      string left = p0.substr(0, pos);
+      string right = p0.substr(pos + 1);
+      if (strip(con) == left || strip(con) == right)
+        return true;
+    }
+  }
+
+  // Disjunction Introduction: from P infer P|Q
+  if (premiseCount == 1) {
+    string p0 = strip(string(nprem[0]));
+    string c = strip(con);
+    size_t pos = c.find('|');
+    if (pos != string::npos) {
+      string left = c.substr(0, pos);
+      string right = c.substr(pos + 1);
+      if (left == p0 || right == p0)
+        return true;
+    }
+  }
+
+  // Disjunctive Syllogism: P|Q and ~P => Q (or symmetric)
+  if (premiseCount >= 2) {
+    for (int i = 0; i < premiseCount; i++) {
+      for (int j = 0; j < premiseCount; j++) {
+        if (i == j)
+          continue;
+        string a = strip(string(nprem[i]));
+        string b = strip(string(nprem[j]));
+        // find disjunction
+        size_t pos = a.find('|');
+        if (pos != string::npos) {
+          string left = a.substr(0, pos);
+          string right = a.substr(pos + 1);
+          // check b is negation of left
+          string nb = b;
+          if ((nb.size() >= 2 && (nb[0] == '!' || nb[0] == '~')) && nb.substr(1) == left) {
+            if (strip(con) == right)
+              return true;
+          }
+          // check b is negation of right
+          if ((nb.size() >= 2 && (nb[0] == '!' || nb[0] == '~')) && nb.substr(1) == right) {
+            if (strip(con) == left)
+              return true;
+          }
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+void statementEvaluationMode() {
+  char premises[10][100];
+  char conclusion[100];
+  char vars[1000];
+  int premiseCount = 0;
+
+  cout << "Enter number of premises (1-10): ";
+  int n;
+  while (!(cin >> n) || n < 1 || n > 10) {
+    cout << "Invalid number. Enter 1-10: ";
+    clearBuffer();
+  }
+  premiseCount = n;
+  clearBuffer();
+
+  for (int i = 0; i < premiseCount; i++) {
+    cout << "Enter premise " << (i + 1) << ": ";
+    cin.getline(premises[i], 100);
+  }
+
+  cout << "Enter conclusion: ";
+  cin.getline(conclusion, 100);
+
+  // validate
+  bool bad = false;
+  for (int i = 0; i < premiseCount; i++) {
+    if (!isValidExpression(premises[i])) {
+      bad = true;
+      break;
+    }
+  }
+  if (!bad && !isValidExpression(conclusion))
+    bad = true;
+
+  if (bad) {
+    cout << "\nInvalid expressions entered. Press any key to return...";
+    cin.get();
+    return;
+  }
+
+  int varCount = detectVariablesMultiple(premises, premiseCount, vars);
+  // include conclusion variables
+  char tempvars[1000];
+  int ccon = detectvariables(conclusion, tempvars);
+  for (int i = 0; i < ccon; i++) {
+    bool found = false;
+    for (int j = 0; j < varCount; j++) {
+      if (vars[j] == tempvars[i]) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      vars[varCount++] = tempvars[i];
+    }
+  }
+
+  printVariables(varCount, vars);
+
+  bool vacuous = false;
+  bool entails = checkEntailment(premises, premiseCount, conclusion, vars, varCount, vacuous);
+
+  bool lawMatched = detectSimpleLaw(premises, premiseCount, conclusion);
+
+  cout << "\nRESULTS:\n";
+  if (lawMatched)
+    cout << "  A simple logical law (conjunction/disjunction/disjunctive syllogism) applies.\n";
+  cout << "  Semantic entailment: ";
+  if (entails) {
+    if (vacuous)
+      cout << "Holds vacuously (no valuation makes all premises true).\n";
+    else
+      cout << "Conclusion follows from premises.\n";
+  } else {
+    cout << "Conclusion does NOT follow (counterexample exists).\n";
+  }
+
+  cout << "\nPress any key to return back to Menu...";
+  cin.get();
 }
