@@ -6,6 +6,17 @@
 #include <string>
 using namespace std;
 
+// Expression tree node
+struct ExprNode {
+  char type;  
+  char value; 
+  int left;  
+  int right;
+};
+
+static ExprNode gNodes[5000];
+static int gNodeCount = 0;
+
 // ----------------------------
 // FUNCTION PROTOTYPES --------
 // ----------------------------
@@ -37,6 +48,20 @@ int detectVariablesMultiple(char exprs[][100], int exprCount, char vars[]);
 bool checkEntailment(char premises[][100], int premiseCount, char conclusion[],
                      char vars[], int varCount, bool &vacuous);
 bool detectSimpleLaw(char premises[][100], int premiseCount, char conclusion[]);
+
+int newNode(char type, char value, int left, int right);
+void resetNodes();
+int buildTreeFromPostfix(char postfix[]);
+int parseToTree(char expr[]);
+void treeToStr(int root, char result[], int &pos, int parentPrec, bool isRight);
+void getExpressionString(int root, char result[]);
+int copyTree(int root);
+bool treesEqual(int a, int b);
+bool isNegationOf(int a, int b);
+bool applyRule(int &root, char lawName[]);
+void printStepByStep(char expr[], char finalResult[]);
+void stepByStepEquivalenceMode();
+void printStepByStepHeader();
 
 int main() {
   int option = 0;
@@ -89,9 +114,12 @@ int main() {
 
       cout << "\nProcess Complete.\nPress any key to return back to Menu...";
       cin.get();
-    } else if (option == 5) {
+    } else if (option == 4) {
       printStatementMode();
       statementEvaluationMode();
+    } else if (option == 5) {
+      printStepByStepHeader();
+      stepByStepEquivalenceMode();
     } else if (option == 3) {
       system("clear");
       printinstructions();
@@ -146,8 +174,9 @@ void printMenu() {
   cout << "  1. Single Expression\n";
   cout << "  2. Two Expressions\n";
   cout << "  3. User's Manual\n";
-  cout << "  5. Statement Evaluation\n";
-  cout << "  4. Exit\n";
+  cout << "  4. Statement Evaluation\n";
+  cout << "  5. Step-by-Step Simplification\n";
+  cout << "  6. Exit\n";
 }
 
 int getUserChoice() {
@@ -832,6 +861,503 @@ void statementEvaluationMode() {
       cout << "Conclusion follows from premises.\n";
   } else {
     cout << "Conclusion does NOT follow (counterexample exists).\n";
+  }
+
+  cout << "\nPress any key to return back to Menu...";
+  cin.get();
+}
+
+// =============================================
+// STEP-BY-STEP SIMPLIFICATION FUNCTIONS -------
+// =============================================
+
+int newNode(char type, char value, int left, int right) {
+  int idx = gNodeCount++;
+  gNodes[idx].type = type;
+  gNodes[idx].value = value;
+  gNodes[idx].left = left;
+  gNodes[idx].right = right;
+  return idx;
+}
+
+void resetNodes() { gNodeCount = 0; }
+
+int buildTreeFromPostfix(char postfix[]) {
+  int stack[200];
+  int top = -1;
+  for (int i = 0; postfix[i] != '\0'; i++) {
+    char c = postfix[i];
+    if ((c >= 'A' && c <= 'Z') || c == '0' || c == '1') {
+      char t = (c >= 'A' && c <= 'Z') ? 'V' : 'C';
+      stack[++top] = newNode(t, c, -1, -1);
+    } else if (c == '!' || c == '~') {
+      int child = stack[top--];
+      stack[++top] = newNode('O', '!', -1, child);
+    } else if (isOperator(c)) {
+      int right = stack[top--];
+      int left = stack[top--];
+      stack[++top] = newNode('O', c, left, right);
+    }
+  }
+  return (top >= 0) ? stack[top] : -1;
+}
+
+int parseToTree(char expr[]) {
+  char normalized[200];
+  normalizeExpression(expr, normalized);
+  char postfix[200];
+  infixToPostfix(normalized, postfix);
+  return buildTreeFromPostfix(postfix);
+}
+
+void treeToStr(int root, char result[], int &pos, int parentPrec,
+               bool isRight) {
+  if (root < 0)
+    return;
+  ExprNode &nd = gNodes[root];
+
+  if (nd.type == 'V' || nd.type == 'C') {
+    result[pos++] = nd.value;
+    result[pos] = '\0';
+    return;
+  }
+
+  if (nd.value == '!') {
+    result[pos++] = '!';
+    if (nd.right >= 0 && gNodes[nd.right].type == 'O' &&
+        gNodes[nd.right].value != '!' && gNodes[nd.right].value != '~') {
+      result[pos++] = '(';
+      treeToStr(nd.right, result, pos, -1, false);
+      result[pos++] = ')';
+    } else {
+      treeToStr(nd.right, result, pos, 5, false);
+    }
+    result[pos] = '\0';
+    return;
+  }
+
+  int myPrec = getPrecedence(nd.value);
+  bool needParens =
+      (myPrec < parentPrec) || (myPrec == parentPrec && isRight);
+
+  if (needParens)
+    result[pos++] = '(';
+  treeToStr(nd.left, result, pos, myPrec, false);
+
+  // Print operator symbol readably
+  if (nd.value == '>')
+    result[pos++] = '>';
+  else if (nd.value == '=')
+    result[pos++] = '=';
+  else
+    result[pos++] = nd.value;
+
+  treeToStr(nd.right, result, pos, myPrec, true);
+  if (needParens)
+    result[pos++] = ')';
+  result[pos] = '\0';
+}
+
+void getExpressionString(int root, char result[]) {
+  int pos = 0;
+  treeToStr(root, result, pos, -1, false);
+  result[pos] = '\0';
+}
+
+int copyTree(int root) {
+  if (root < 0)
+    return -1;
+  int l = copyTree(gNodes[root].left);
+  int r = copyTree(gNodes[root].right);
+  return newNode(gNodes[root].type, gNodes[root].value, l, r);
+}
+
+bool treesEqual(int a, int b) {
+  if (a < 0 && b < 0)
+    return true;
+  if (a < 0 || b < 0)
+    return false;
+  if (gNodes[a].type != gNodes[b].type)
+    return false;
+  if (gNodes[a].value != gNodes[b].value)
+    return false;
+  return treesEqual(gNodes[a].left, gNodes[b].left) &&
+         treesEqual(gNodes[a].right, gNodes[b].right);
+}
+
+bool isNegationOf(int a, int b) {
+  if (a >= 0 && gNodes[a].type == 'O' && gNodes[a].value == '!') {
+    return treesEqual(gNodes[a].right, b);
+  }
+  return false;
+}
+
+bool applyRule(int &root, char lawName[]) {
+  if (root < 0)
+    return false;
+  ExprNode &n = gNodes[root];
+
+  // --- Operator Elimination Rules ---
+
+  // Material Implication: P>Q -> !P|Q
+  if (n.type == 'O' && n.value == '>') {
+    int notP = newNode('O', '!', -1, n.left);
+    root = newNode('O', '|', notP, n.right);
+    strcpy(lawName, "Material Implication");
+    return true;
+  }
+
+  // Biconditional Elimination: P=Q -> (P&Q)|(!P&!Q)
+  if (n.type == 'O' && n.value == '=') {
+    int pCopy = copyTree(n.left);
+    int qCopy = copyTree(n.right);
+    int pq = newNode('O', '&', n.left, n.right);
+    int notP = newNode('O', '!', -1, pCopy);
+    int notQ = newNode('O', '!', -1, qCopy);
+    int npnq = newNode('O', '&', notP, notQ);
+    root = newNode('O', '|', pq, npnq);
+    strcpy(lawName, "Biconditional Elimination");
+    return true;
+  }
+
+  // XOR Definition: P^Q -> (P&!Q)|(!P&Q)
+  if (n.type == 'O' && n.value == '^') {
+    int pCopy = copyTree(n.left);
+    int qCopy = copyTree(n.right);
+    int notQ = newNode('O', '!', -1, n.right);
+    int notP = newNode('O', '!', -1, pCopy);
+    int pnq = newNode('O', '&', n.left, notQ);
+    int npq = newNode('O', '&', notP, qCopy);
+    root = newNode('O', '|', pnq, npq);
+    strcpy(lawName, "XOR Definition");
+    return true;
+  }
+
+  // --- Negation Rules ---
+
+  // Double Negation: !!P -> P
+  if (n.type == 'O' && n.value == '!' && n.right >= 0) {
+    ExprNode &child = gNodes[n.right];
+    if (child.type == 'O' && child.value == '!') {
+      root = child.right;
+      strcpy(lawName, "Double Negation Law");
+      return true;
+    }
+  }
+
+  // De Morgan's Law: !(P&Q) -> !P|!Q
+  if (n.type == 'O' && n.value == '!' && n.right >= 0) {
+    ExprNode &child = gNodes[n.right];
+    if (child.type == 'O' && child.value == '&') {
+      int notL = newNode('O', '!', -1, child.left);
+      int notR = newNode('O', '!', -1, child.right);
+      root = newNode('O', '|', notL, notR);
+      strcpy(lawName, "De Morgan's Law");
+      return true;
+    }
+  }
+
+  // De Morgan's Law: !(P|Q) -> !P&!Q
+  if (n.type == 'O' && n.value == '!' && n.right >= 0) {
+    ExprNode &child = gNodes[n.right];
+    if (child.type == 'O' && child.value == '|') {
+      int notL = newNode('O', '!', -1, child.left);
+      int notR = newNode('O', '!', -1, child.right);
+      root = newNode('O', '&', notL, notR);
+      strcpy(lawName, "De Morgan's Law");
+      return true;
+    }
+  }
+
+  // --- Simplification Rules ---
+
+  // Complement: P&!P -> 0
+  if (n.type == 'O' && n.value == '&') {
+    if (isNegationOf(n.right, n.left) || isNegationOf(n.left, n.right)) {
+      root = newNode('C', '0', -1, -1);
+      strcpy(lawName, "Complement Law");
+      return true;
+    }
+  }
+
+  // Complement: P|!P -> 1
+  if (n.type == 'O' && n.value == '|') {
+    if (isNegationOf(n.right, n.left) || isNegationOf(n.left, n.right)) {
+      root = newNode('C', '1', -1, -1);
+      strcpy(lawName, "Complement Law");
+      return true;
+    }
+  }
+
+  // Idempotent: P&P -> P
+  if (n.type == 'O' && n.value == '&' && treesEqual(n.left, n.right)) {
+    root = n.left;
+    strcpy(lawName, "Idempotent Law");
+    return true;
+  }
+
+  // Idempotent: P|P -> P
+  if (n.type == 'O' && n.value == '|' && treesEqual(n.left, n.right)) {
+    root = n.left;
+    strcpy(lawName, "Idempotent Law");
+    return true;
+  }
+
+  // Identity: P&1 -> P
+  if (n.type == 'O' && n.value == '&') {
+    if (n.right >= 0 && gNodes[n.right].type == 'C' &&
+        gNodes[n.right].value == '1') {
+      root = n.left;
+      strcpy(lawName, "Identity Law");
+      return true;
+    }
+    if (n.left >= 0 && gNodes[n.left].type == 'C' &&
+        gNodes[n.left].value == '1') {
+      root = n.right;
+      strcpy(lawName, "Identity Law");
+      return true;
+    }
+  }
+
+  // Identity: P|0 -> P
+  if (n.type == 'O' && n.value == '|') {
+    if (n.right >= 0 && gNodes[n.right].type == 'C' &&
+        gNodes[n.right].value == '0') {
+      root = n.left;
+      strcpy(lawName, "Identity Law");
+      return true;
+    }
+    if (n.left >= 0 && gNodes[n.left].type == 'C' &&
+        gNodes[n.left].value == '0') {
+      root = n.right;
+      strcpy(lawName, "Identity Law");
+      return true;
+    }
+  }
+
+  // Domination: P&0 -> 0
+  if (n.type == 'O' && n.value == '&') {
+    if ((n.right >= 0 && gNodes[n.right].type == 'C' &&
+         gNodes[n.right].value == '0') ||
+        (n.left >= 0 && gNodes[n.left].type == 'C' &&
+         gNodes[n.left].value == '0')) {
+      root = newNode('C', '0', -1, -1);
+      strcpy(lawName, "Domination Law");
+      return true;
+    }
+  }
+
+  // Domination: P|1 -> 1
+  if (n.type == 'O' && n.value == '|') {
+    if ((n.right >= 0 && gNodes[n.right].type == 'C' &&
+         gNodes[n.right].value == '1') ||
+        (n.left >= 0 && gNodes[n.left].type == 'C' &&
+         gNodes[n.left].value == '1')) {
+      root = newNode('C', '1', -1, -1);
+      strcpy(lawName, "Domination Law");
+      return true;
+    }
+  }
+
+  // Absorption: P&(P|Q) -> P
+  if (n.type == 'O' && n.value == '&') {
+    if (n.right >= 0 && gNodes[n.right].type == 'O' &&
+        gNodes[n.right].value == '|') {
+      if (treesEqual(n.left, gNodes[n.right].left) ||
+          treesEqual(n.left, gNodes[n.right].right)) {
+        root = n.left;
+        strcpy(lawName, "Absorption Law");
+        return true;
+      }
+    }
+    if (n.left >= 0 && gNodes[n.left].type == 'O' &&
+        gNodes[n.left].value == '|') {
+      if (treesEqual(n.right, gNodes[n.left].left) ||
+          treesEqual(n.right, gNodes[n.left].right)) {
+        root = n.right;
+        strcpy(lawName, "Absorption Law");
+        return true;
+      }
+    }
+  }
+
+  // Absorption: P|(P&Q) -> P
+  if (n.type == 'O' && n.value == '|') {
+    if (n.right >= 0 && gNodes[n.right].type == 'O' &&
+        gNodes[n.right].value == '&') {
+      if (treesEqual(n.left, gNodes[n.right].left) ||
+          treesEqual(n.left, gNodes[n.right].right)) {
+        root = n.left;
+        strcpy(lawName, "Absorption Law");
+        return true;
+      }
+    }
+    if (n.left >= 0 && gNodes[n.left].type == 'O' &&
+        gNodes[n.left].value == '&') {
+      if (treesEqual(n.right, gNodes[n.left].left) ||
+          treesEqual(n.right, gNodes[n.left].right)) {
+        root = n.right;
+        strcpy(lawName, "Absorption Law");
+        return true;
+      }
+    }
+  }
+
+  // Negation of constant: !0 -> 1, !1 -> 0
+  if (n.type == 'O' && n.value == '!' && n.right >= 0 &&
+      gNodes[n.right].type == 'C') {
+    if (gNodes[n.right].value == '0') {
+      root = newNode('C', '1', -1, -1);
+      strcpy(lawName, "Negation of Constant");
+      return true;
+    }
+    if (gNodes[n.right].value == '1') {
+      root = newNode('C', '0', -1, -1);
+      strcpy(lawName, "Negation of Constant");
+      return true;
+    }
+  }
+
+  // --- Recurse into children ---
+  if (n.left >= 0) {
+    if (applyRule(n.left, lawName))
+      return true;
+  }
+  if (n.right >= 0) {
+    if (applyRule(n.right, lawName))
+      return true;
+  }
+
+  return false;
+}
+
+void printStepByStep(char expr[], char finalResult[]) {
+  resetNodes();
+  int root = parseToTree(expr);
+
+  char result[500];
+  getExpressionString(root, result);
+  cout << "  Start:    " << result << endl;
+
+  char lawName[100];
+  int step = 1;
+  while (applyRule(root, lawName)) {
+    getExpressionString(root, result);
+    cout << "  Step " << setw(2) << step << ":   " << result;
+    // Pad the expression for alignment
+    int len = strlen(result);
+    if (len < 30) {
+      for (int i = 0; i < 30 - len; i++)
+        cout << ' ';
+    } else {
+      cout << "  ";
+    }
+    cout << "[" << lawName << "]" << endl;
+    step++;
+    if (step > 50) {
+      cout << "  (Maximum simplification steps reached)" << endl;
+      break;
+    }
+  }
+
+  if (step == 1)
+    cout << "  (No simplification rules apply)" << endl;
+
+  getExpressionString(root, result);
+  strcpy(finalResult, result);
+}
+
+void printStepByStepHeader() {
+  system("clear");
+  cout << "=====================================================" << endl;
+  cout << "           STEP-BY-STEP SIMPLIFICATION MODE           " << endl;
+  cout << "=====================================================" << endl
+       << endl;
+}
+
+void stepByStepEquivalenceMode() {
+  int mode;
+  cout << "  1. Simplify a single expression" << endl;
+  cout << "  2. Compare two expressions step-by-step" << endl;
+  cout << "\nEnter choice (1 or 2): ";
+  while (!(cin >> mode) || (mode != 1 && mode != 2)) {
+    cout << "Enter 1 or 2: ";
+    clearBuffer();
+  }
+  clearBuffer();
+
+  if (mode == 1) {
+    char raw[100];
+    cout << "\nEnter expression: ";
+    cin.getline(raw, 100);
+
+    if (!isValidExpression(raw)) {
+      cout << "\nInvalid expression. Press any key to return...";
+      cin.get();
+      return;
+    }
+
+    cout << "\n--- Step-by-Step Simplification ---\n" << endl;
+    char finalResult[500];
+    printStepByStep(raw, finalResult);
+    cout << "\n  Final Result: " << finalResult << endl;
+
+  } else {
+    char raw1[100], raw2[100];
+    cout << "\nEnter first expression:  ";
+    cin.getline(raw1, 100);
+    cout << "Enter second expression: ";
+    cin.getline(raw2, 100);
+
+    if (!isValidExpression(raw1) || !isValidExpression(raw2)) {
+      cout << "\nInvalid expression(s). Press any key to return...";
+      cin.get();
+      return;
+    }
+
+    char final1[500], final2[500];
+
+    cout << "\n--- Simplifying Expression 1 ---\n" << endl;
+    printStepByStep(raw1, final1);
+
+    cout << "\n--- Simplifying Expression 2 ---\n" << endl;
+    printStepByStep(raw2, final2);
+
+    // Check simplified forms
+    cout << "\n=====================================================" << endl;
+    cout << "  Expression 1 simplifies to: " << final1 << endl;
+    cout << "  Expression 2 simplifies to: " << final2 << endl;
+
+    if (strcmp(final1, final2) == 0) {
+      cout << "\n  RESULT: Both expressions simplify to the same form.";
+      cout << "\n          The expressions are LOGICALLY EQUIVALENT." << endl;
+    } else {
+      // Verify with truth table even if forms differ
+      char norm1[100], norm2[100];
+      normalizeExpression(raw1, norm1);
+      normalizeExpression(raw2, norm2);
+      char vars[100];
+      int varCount = combineVariables(norm1, norm2, vars);
+      static int table[1000][500];
+      generateTruthTable(varCount, table);
+      int rows = (int)pow(2, varCount);
+      bool equivalent = true;
+      for (int i = 0; i < rows; i++) {
+        int r1 = evaluateExpression(norm1, vars, varCount, table[i]);
+        int r2 = evaluateExpression(norm2, vars, varCount, table[i]);
+        if (r1 != r2) {
+          equivalent = false;
+          break;
+        }
+      }
+      if (equivalent) {
+        cout << "\n  RESULT: Simplified forms differ, but truth table";
+        cout << "\n          confirms they are LOGICALLY EQUIVALENT." << endl;
+      } else {
+        cout << "\n  RESULT: The expressions are NOT EQUIVALENT." << endl;
+      }
+    }
+    cout << "=====================================================" << endl;
   }
 
   cout << "\nPress any key to return back to Menu...";
