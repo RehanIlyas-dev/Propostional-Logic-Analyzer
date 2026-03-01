@@ -114,10 +114,10 @@ int main() {
 
       cout << "\nProcess Complete.\nPress any key to return back to Menu...";
       cin.get();
-    } else if (option == 4) {
+    } else if (option == 5) {
       printStatementMode();
       statementEvaluationMode();
-    } else if (option == 5) {
+    } else if (option == 6) {
       printStepByStepHeader();
       stepByStepEquivalenceMode();
     } else if (option == 3) {
