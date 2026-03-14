@@ -12,7 +12,8 @@
 </p>
 
 ---
-.
+
+
 ## 📖 About
 
 **Propositional Logic Analyzer** is an interactive console application built in **C++** that bridges the gap between Discrete Mathematics theory and practical computation. It automates the tedious process of manually creating truth tables, checking logical equivalence, validating arguments, and simplifying complex expressions — all from a single menu-driven interface.
