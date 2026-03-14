@@ -66,7 +66,7 @@ void printStepByStepHeader();
 int main() {
   int option = 0;
 
-  while (option != 4) {
+  while (option != 6) {
     printHeader();
     printMenu();
     option = getUserChoice();
@@ -114,19 +114,19 @@ int main() {
 
       cout << "\nProcess Complete.\nPress any key to return back to Menu...";
       cin.get();
-    } else if (option == 5) {
-      printStatementMode();
-      statementEvaluationMode();
-    } else if (option == 6) {
-      printStepByStepHeader();
-      stepByStepEquivalenceMode();
     } else if (option == 3) {
-      system("clear");
+      system("cls");
       printinstructions();
       printInstructionsmenu();
       cout << "\nPress any key to return back to Menu...";
       cin.get();
     } else if (option == 4) {
+      printStatementMode();
+      statementEvaluationMode();
+    } else if (option == 5) {
+      printStepByStepHeader();
+      stepByStepEquivalenceMode();
+    } else if (option == 6) {
       cout << "Exiting Program...\n\n";
       cout << "Thanks For Using Our Program!\n";
       return 0;
@@ -145,21 +145,21 @@ void clearBuffer() {
 }
 
 void printHeader() {
-  system("clear");
+  system("cls");
   cout << "=====================================================\n";
   cout << "       LOGICAL ANALYZER - TRUTH TABLE GENERATOR     \n";
   cout << "=====================================================\n\n";
 }
 
 void printsingleexp() {
-  system("clear");
+  system("cls");
   cout << "=====================================================\n";
   cout << "               SINGLE EXPRESSION MODE               \n";
   cout << "=====================================================\n\n";
 }
 
 void printdoubleexp() {
-  system("clear");
+  system("cls");
   cout << "=====================================================\n";
   cout << "               DOUBLE EXPRESSION MODE               \n";
   cout << "=====================================================\n\n";
@@ -183,8 +183,8 @@ int getUserChoice() {
   int choice;
   cout << "\nEnter your choice: ";
 
-  while (!(cin >> choice)) {
-    cout << "Invalid input. Please enter 1, 2, 3, 4, or 5: ";
+  while (!(cin >> choice) || choice < 1 || choice > 6) {
+    cout << "Invalid input. Please enter 1, 2, 3, 4, 5, or 6: ";
     clearBuffer();
   }
   clearBuffer();
@@ -628,7 +628,7 @@ void printInstructionsmenu() {
 }
 
 void printStatementMode() {
-  system("clear");
+  system("cls");
   cout << "=====================================================" << endl;
   cout << "               STATEMENT EVALUATION MODE             " << endl;
   cout << "=====================================================" << endl
@@ -867,9 +867,6 @@ void statementEvaluationMode() {
   cin.get();
 }
 
-// =============================================
-// STEP-BY-STEP SIMPLIFICATION FUNCTIONS -------
-// =============================================
 
 int newNode(char type, char value, int left, int right) {
   int idx = gNodeCount++;
@@ -944,7 +941,7 @@ void treeToStr(int root, char result[], int &pos, int parentPrec,
     result[pos++] = '(';
   treeToStr(nd.left, result, pos, myPrec, false);
 
-  // Print operator symbol readably
+  
   if (nd.value == '>')
     result[pos++] = '>';
   else if (nd.value == '=')
@@ -1033,9 +1030,7 @@ bool applyRule(int &root, char lawName[]) {
     return true;
   }
 
-  // --- Negation Rules ---
 
-  // Double Negation: !!P -> P
   if (n.type == 'O' && n.value == '!' && n.right >= 0) {
     ExprNode &child = gNodes[n.right];
     if (child.type == 'O' && child.value == '!') {
@@ -1057,7 +1052,6 @@ bool applyRule(int &root, char lawName[]) {
     }
   }
 
-  // De Morgan's Law: !(P|Q) -> !P&!Q
   if (n.type == 'O' && n.value == '!' && n.right >= 0) {
     ExprNode &child = gNodes[n.right];
     if (child.type == 'O' && child.value == '|') {
@@ -1268,7 +1262,7 @@ void printStepByStep(char expr[], char finalResult[]) {
 }
 
 void printStepByStepHeader() {
-  system("clear");
+  system("cls");
   cout << "=====================================================" << endl;
   cout << "           STEP-BY-STEP SIMPLIFICATION MODE           " << endl;
   cout << "=====================================================" << endl
